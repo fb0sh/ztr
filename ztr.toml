@@ -1,7 +1,7 @@
 # ZTR 压缩工具配置文件
 
 # 压缩格式: 支持 "zip", "tar.gz", "7z"
-format = "tar.gz"
+format = "zip"
 
 # 输出文件名 (可选，默认使用当前目录名)
 # output_name = "my_archive"

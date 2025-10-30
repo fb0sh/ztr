@@ -13,7 +13,7 @@ use config::Config;
 #[command(about = "一个基于配置文件的智能压缩工具")]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -34,16 +34,29 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Init => {
+        Some(Commands::Init) => {
             create_default_config()?;
             println!("✓ 已创建默认配置文件: ztr.toml");
         }
-        Commands::Show => {
+        Some(Commands::Show) => {
             show_supported_formats();
         }
-        Commands::Compress { config } => {
+        Some(Commands::Compress { config }) => {
             let config = Config::load(&config)?;
             compressor::compress_directory(&config)?;
+        }
+        None => {
+            // 没有命令时，检查ztr.toml是否存在，存在则压缩
+            if std::path::Path::new("ztr.toml").exists() {
+                println!("找到配置文件 ztr.toml，开始压缩...");
+                let config = Config::load("ztr.toml")?;
+                compressor::compress_directory(&config)?;
+            } else {
+                println!("未找到配置文件 ztr.toml");
+                println!("使用 'ztr init' 创建配置文件");
+                println!("使用 'ztr show' 查看支持的格式");
+                println!("使用 'ztr compress' 压缩当前目录");
+            }
         }
     }
 

@@ -100,7 +100,8 @@ fn compress_zip(
         let mut file = File::open(file_path)
             .with_context(|| format!("打开文件失败: {}", file_path.display()))?;
 
-        zip.start_file(relative_path.to_string_lossy(), FileOptions::default())
+        let relative_path_str = relative_path.to_string_lossy().replace("\\", "/");
+        zip.start_file(&relative_path_str, FileOptions::default())
             .with_context(|| format!("添加文件到ZIP失败: {}", file_path.display()))?;
 
         let mut buffer = Vec::new();
@@ -152,13 +153,11 @@ fn compress_7z(
     output_path: &Path,
     pb: &ProgressBar,
 ) -> Result<()> {
-    use sevenz_rust::compress_to_path;
+    use sevenz_rust::{SevenZArchiveEntry, SevenZWriter};
+    use std::io::Read;
 
-    // 创建一个临时的目录结构来压缩
-    let temp_dir = std::env::temp_dir().join("ztr_temp");
-    std::fs::create_dir_all(&temp_dir).context("创建临时目录失败")?;
+    let mut sz_writer = SevenZWriter::create(output_path).context("创建7Z文件失败")?;
 
-    // 复制文件到临时目录
     for file_path in files {
         pb.inc(1);
 
@@ -166,28 +165,24 @@ fn compress_7z(
             .strip_prefix(base_dir)
             .with_context(|| format!("计算相对路径失败: {}", file_path.display()))?;
 
-        let temp_file_path = temp_dir.join(relative_path);
+        if file_path.is_file() {
+            let mut file = File::open(file_path)
+                .with_context(|| format!("打开文件失败: {}", file_path.display()))?;
+            let mut content = Vec::new();
+            file.read_to_end(&mut content)
+                .with_context(|| format!("读取文件内容失败: {}", file_path.display()))?;
 
-        // 创建父目录
-        if let Some(parent) = temp_file_path.parent() {
-            std::fs::create_dir_all(parent)
-                .with_context(|| format!("创建临时目录失败: {}", parent.display()))?;
+            let mut entry = SevenZArchiveEntry::default();
+            entry.name = relative_path.to_string_lossy().replace("\\", "/");
+            entry.size = content.len() as u64;
+
+            sz_writer
+                .push_archive_entry(entry, Some(content.as_slice()))
+                .with_context(|| format!("添加文件到7Z失败: {}", file_path.display()))?;
         }
-
-        std::fs::copy(file_path, &temp_file_path).with_context(|| {
-            format!(
-                "复制文件到临时目录失败: {} -> {}",
-                file_path.display(),
-                temp_file_path.display()
-            )
-        })?;
     }
 
-    // 压缩临时目录
-    compress_to_path(&temp_dir, output_path).context("7Z压缩失败")?;
-
-    // 清理临时目录
-    std::fs::remove_dir_all(&temp_dir).ok(); // 忽略清理错误
+    sz_writer.finish().context("完成7Z写入失败")?;
 
     Ok(())
 }
