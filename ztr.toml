@@ -1,0 +1,37 @@
+# ZTR 压缩工具配置文件
+
+# 压缩格式: 支持 "zip", "tar.gz", "7z"
+format = "tar.gz"
+
+# 输出文件名 (可选，默认使用当前目录名)
+# output_name = "my_archive"
+
+# 忽略规则列表 (类似 .gitignore)
+ignore = [
+    "target/",
+    "*.tmp",
+    "*.log",
+    ".DS_Store",
+    "Thumbs.db",
+    "*.swp",
+    "*.swo",
+    "*~",
+    ".git/",
+    ".svn/",
+    ".hg/",
+    "node_modules/",
+    "__pycache__/",
+    ".pytest_cache/",
+    ".venv/",
+    "venv/",
+    "env/",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    ".idea/",
+    ".vscode/",
+    "*.iml",
+]
+
+# 指定忽略文件路径 (可选，默认使用 .gitignore)
+# ignore_file = "./.gitignore"
