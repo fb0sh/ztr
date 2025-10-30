@@ -3,6 +3,9 @@ name = "ztr"
 version = "2.0.0"
 edition = "2024"
 license = "MIT"
+description = "一个基于配置文件的智能压缩工具"
+repository = "https://github.com/fb0sh/ztr"
+readme = "README.md"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
