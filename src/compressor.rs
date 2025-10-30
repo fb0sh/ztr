@@ -1,34 +1,40 @@
 use crate::config::Config;
-use crate::ignore_rules::IgnoreRules;
 use anyhow::{Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
-pub fn compress_directory(config: &Config) -> Result<()> {
-    let current_dir = std::env::current_dir().context("获取当前目录失败")?;
+/// 根据配置压缩指定文件列表。
 
+/// # 参数
+/// - `config`: 压缩配置。
+/// - `base_dir`: 基础目录，所有文件路径都将相对于此目录进行计算。
+/// - `files_to_compress`: 要压缩的文件路径列表。
+
+/// # 返回
+/// `Result<PathBuf>`: 成功时返回输出文件的路径，失败时返回错误信息。
+pub fn compress_directory(
+    config: &Config,
+    base_dir: &Path,
+    files_to_compress: Vec<PathBuf>,
+) -> Result<PathBuf> {
     let output_name = config.get_output_name();
     let output_path = match config.format.as_str() {
-        "zip" => PathBuf::from(format!("{}.zip", output_name)),
-        "tar.gz" => PathBuf::from(format!("{}.tar.gz", output_name)),
-        "7z" => PathBuf::from(format!("{}.7z", output_name)),
+        "zip" => base_dir.join(format!("{}.zip", output_name)),
+        "tar.gz" => base_dir.join(format!("{}.tar.gz", output_name)),
+        "7z" => base_dir.join(format!("{}.7z", output_name)),
         _ => anyhow::bail!("不支持的压缩格式: {}", config.format),
     };
 
-    println!("正在压缩目录: {}", current_dir.display());
+    println!("正在压缩目录: {}", base_dir.display());
     println!("输出文件: {}", output_path.display());
     println!("压缩格式: {}", config.format);
 
-    // 创建忽略规则
-    let ignore_rules = IgnoreRules::new(&config.get_ignore_rules(), &current_dir)?;
-
-    // 获取要压缩的文件列表
-    let files = ignore_rules.get_files_to_compress(&current_dir)?;
+    let files = files_to_compress;
 
     if files.is_empty() {
-        println!("没有找到要压缩的文件");
-        return Ok(());
+        println!("没有需要压缩的文件。");
+        return Ok(output_path);
     }
 
     println!("找到 {} 个文件要压缩", files.len());
@@ -45,9 +51,9 @@ pub fn compress_directory(config: &Config) -> Result<()> {
 
     // 根据格式选择压缩方法
     let result = match config.format.as_str() {
-        "zip" => compress_zip(&files, &current_dir, &output_path, &pb),
-        "tar.gz" => compress_tar_gz(&files, &current_dir, &output_path, &pb),
-        "7z" => compress_7z(&files, &current_dir, &output_path, &pb),
+        "zip" => compress_zip(&files, base_dir, &output_path, &pb),
+        "tar.gz" => compress_tar_gz(&files, base_dir, &output_path, &pb),
+        "7z" => compress_7z(&files, base_dir, &output_path, &pb),
         _ => anyhow::bail!("不支持的压缩格式: {}", config.format),
     };
 
@@ -75,10 +81,20 @@ pub fn compress_directory(config: &Config) -> Result<()> {
         }
     }
 
-    Ok(())
+    Ok(output_path)
 }
 
-fn compress_zip(
+/// 将文件压缩为 ZIP 格式。
+
+/// # 参数
+/// - `files`: 要压缩的文件路径列表。
+/// - `base_dir`: 基础目录，用于计算文件中相对路径。
+/// - `output_path`: 输出 ZIP 文件的路径。
+/// - `pb`: 进度条。
+
+/// # 返回
+/// `Result<()>`: 成功时返回 `Ok(())`，失败时返回错误信息。
+pub fn compress_zip(
     files: &[PathBuf],
     base_dir: &Path,
     output_path: &Path,
@@ -117,7 +133,17 @@ fn compress_zip(
     Ok(())
 }
 
-fn compress_tar_gz(
+/// 将文件压缩为 TAR.GZ 格式。
+
+/// # 参数
+/// - `files`: 要压缩的文件路径列表。
+/// - `base_dir`: 基础目录，用于计算文件中相对路径。
+/// - `output_path`: 输出 TAR.GZ 文件的路径。
+/// - `pb`: 进度条。
+
+/// # 返回
+/// `Result<()>`: 成功时返回 `Ok(())`，失败时返回错误信息。
+pub fn compress_tar_gz(
     files: &[PathBuf],
     base_dir: &Path,
     output_path: &Path,
@@ -147,7 +173,17 @@ fn compress_tar_gz(
     Ok(())
 }
 
-fn compress_7z(
+/// 将文件压缩为 7Z 格式。
+
+/// # 参数
+/// - `files`: 要压缩的文件路径列表。
+/// - `base_dir`: 基础目录，用于计算文件中相对路径。
+/// - `output_path`: 输出 7Z 文件的路径。
+/// - `pb`: 进度条。
+
+/// # 返回
+/// `Result<()>`: 成功时返回 `Ok(())`，失败时返回错误信息。
+pub fn compress_7z(
     files: &[PathBuf],
     base_dir: &Path,
     output_path: &Path,

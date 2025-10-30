@@ -7,8 +7,16 @@ description = "一个基于配置文件的智能压缩工具"
 repository = "https://github.com/fb0sh/ztr"
 readme = "README.md"
 
+[lib]
+name = "ztr_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ztr"
+path = "src/main.rs"
+
 [dependencies]
-clap = { version = "4.0", features = ["derive"] }
+clap = { version = "4.4.6", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 zip = "0.6"
@@ -18,3 +26,7 @@ sevenz-rust = "0.6"
 ignore = "0.4"
 indicatif = "0.17"
 anyhow = "1.0"
+walkdir = "2.3.3"
+
+[dev-dependencies]
+tempfile = "3.10"
