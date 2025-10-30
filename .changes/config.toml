@@ -21,11 +21,8 @@ User-Agent = "Semifold 0.1.11"
 
 [[resolver.rust.publish]]
 command = "cargo"
-args = ["publish"]
+args = ["publish", "--registry", "crates-io"]
 
 [[resolver.rust.post-version]]
 command = "cargo"
-args = [
-    "generate-lockfile",
-    "--offline",
-]
+args = ["generate-lockfile", "--offline"]
