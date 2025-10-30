@@ -7,31 +7,7 @@ format = "zip"
 # output_name = "my_archive"
 
 # 忽略规则列表 (类似 .gitignore)
-ignore = [
-    "target/",
-    "*.tmp",
-    "*.log",
-    ".DS_Store",
-    "Thumbs.db",
-    "*.swp",
-    "*.swo",
-    "*~",
-    ".git/",
-    ".svn/",
-    ".hg/",
-    "node_modules/",
-    "__pycache__/",
-    ".pytest_cache/",
-    ".venv/",
-    "venv/",
-    "env/",
-    "*.pyc",
-    "*.pyo",
-    "*.pyd",
-    ".idea/",
-    ".vscode/",
-    "*.iml",
-]
+ignore = [".git/"]
 
 # 指定忽略文件路径 (可选，默认使用 .gitignore)
-# ignore_file = "./.gitignore"
+ignore_file = "./.gitignore"

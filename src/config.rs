@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,23 +85,27 @@ impl Config {
     }
 
     pub fn get_ignore_rules(&self) -> Vec<String> {
-        let mut rules = Vec::new();
+        let mut rules = std::collections::HashSet::new();
 
-        // 如果配置中有 ignore 规则，优先使用
-        if let Some(ignore_list) = &self.ignore {
-            rules.extend(ignore_list.clone());
-        } else if let Some(ignore_file_path) = &self.ignore_file {
-            // 否则尝试从指定的忽略文件读取
+        // 首先尝试从指定的忽略文件读取规则
+        if let Some(ignore_file_path) = &self.ignore_file {
             if let Ok(content) = std::fs::read_to_string(ignore_file_path) {
                 for line in content.lines() {
                     let line = line.trim();
                     if !line.is_empty() && !line.starts_with('#') {
-                        rules.push(line.to_string());
+                        rules.insert(line.to_string());
                     }
                 }
             }
         }
 
-        rules
+        // 如果配置中有 ignore 规则，则添加这些规则（优先级更高，会覆盖ignore_file中的重复规则）
+        if let Some(ignore_list) = &self.ignore {
+            for rule in ignore_list {
+                rules.insert(rule.clone());
+            }
+        }
+
+        rules.into_iter().collect()
     }
 }
